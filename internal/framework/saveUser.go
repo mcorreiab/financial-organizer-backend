@@ -41,5 +41,5 @@ func (s *SaveUser) Save(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, nil)
+	c.JSON(http.StatusCreated, nil)
 }

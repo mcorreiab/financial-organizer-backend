@@ -56,7 +56,7 @@ func cleanDatabase(t *testing.T) {
 }
 
 func testSaveUser(t *testing.T) {
-	createSaveUserIntegrationTest(t, username, password).Execute().CheckStatusCode(http.StatusOK)
+	createSaveUserIntegrationTest(t, username, password).Execute().CheckStatusCode(http.StatusCreated)
 	checkIfUserGotInserted(t, databaseConnection)
 }
 
@@ -98,7 +98,7 @@ func checkThatUserIsNotOnDatabase(t *testing.T, username string) {
 }
 
 func testTryToInsertUserThatAlreadyExists(t *testing.T) {
-	createSaveUserIntegrationTest(t, username, password).Execute().CheckStatusCode(http.StatusOK)
+	createSaveUserIntegrationTest(t, username, password).Execute().CheckStatusCode(http.StatusCreated)
 	createSaveUserIntegrationTest(t, username, password).Execute().CheckStatusCode(http.StatusConflict)
 }
 
