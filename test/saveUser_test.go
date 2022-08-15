@@ -19,42 +19,104 @@ import (
 )
 
 const username = "username"
+const password = "password"
 
-func TestSaveUser(t *testing.T) {
-	db := getDatabaseConnection(t)
+var databaseConnection *sql.DB
 
-	requestToSaveUser(t, db)
-
-	checkIfUserGotInserted(t, db)
+type saveUserIntegrationTest struct {
+	router   *gin.Engine
+	request  *http.Request
+	t        *testing.T
+	response *httptest.ResponseRecorder
 }
 
-func getDatabaseConnection(t *testing.T) *sql.DB {
+func TestSaveNewUser(t *testing.T) {
 	err := godotenv.Load("../.env")
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
 
-	return framework.GetDatabaseConnection()
+	databaseConnection = framework.GetDatabaseConnection()
+
+	cleanDatabase(t)
+	t.Run("SaveUser", testSaveUser)
+	cleanDatabase(t)
+	t.Run("UsernameMissing", testReturnBadRequestWhenUsernameIsMissing)
+	cleanDatabase(t)
+	t.Run("PasswordMissing", testReturnBadRequestWhenPasswordIsMissing)
+	cleanDatabase(t)
+	t.Run("InsertExistentUser", testTryToInsertUserThatAlreadyExists)
 }
 
-func requestToSaveUser(t *testing.T, databasConnection *sql.DB) {
-	uc := usecase.NewSaveUserUseCase(adapter.NewUserRepository(databasConnection))
-	saveUserRoute := framework.NewSaveUserController(uc)
+func cleanDatabase(t *testing.T) {
+	_, err := databaseConnection.Exec("DELETE from users")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
 
+func testSaveUser(t *testing.T) {
+	createSaveUserIntegrationTest(t, username, password).Execute().CheckStatusCode(http.StatusOK)
+	checkIfUserGotInserted(t, databaseConnection)
+}
+
+func checkIfUserGotInserted(t *testing.T, databaseConnection *sql.DB) {
+	repository := adapter.NewUserRepository(databaseConnection)
+	user, err := repository.FindUserByUsername(username)
+
+	if err != nil {
+		t.Fatal("Failed to query database: ", err)
+	}
+
+	if user != nil {
+		t.Errorf("Could not find the user on database")
+	}
+}
+
+func testReturnBadRequestWhenUsernameIsMissing(t *testing.T) {
+	username := ""
+	createSaveUserIntegrationTest(t, username, password).Execute().CheckStatusCode(http.StatusBadRequest)
+	checkThatUserIsNotOnDatabase(t, username)
+}
+
+func testReturnBadRequestWhenPasswordIsMissing(t *testing.T) {
+	createSaveUserIntegrationTest(t, username, "").Execute().CheckStatusCode(http.StatusBadRequest)
+	checkThatUserIsNotOnDatabase(t, username)
+}
+
+func checkThatUserIsNotOnDatabase(t *testing.T, username string) {
+	var s string
+	err := databaseConnection.QueryRow("SELECT username from users where username = $1", username).Scan(&s)
+	if err != sql.ErrNoRows {
+		t.Fatal("Should return ErrNoRows. Returned", err)
+	}
+}
+
+func testTryToInsertUserThatAlreadyExists(t *testing.T) {
+	createSaveUserIntegrationTest(t, username, password).Execute().CheckStatusCode(http.StatusOK)
+	createSaveUserIntegrationTest(t, username, password).Execute().CheckStatusCode(http.StatusConflict)
+}
+
+func createSaveUserIntegrationTest(t *testing.T, username string, password string) *saveUserIntegrationTest {
+	return &saveUserIntegrationTest{
+		createSaveUserRoute(databaseConnection),
+		createRequest(t, username, password),
+		t,
+		nil,
+	}
+}
+
+func createSaveUserRoute(databaseConnection *sql.DB) *gin.Engine {
+	uc := usecase.NewSaveUserUseCase(adapter.NewUserRepository(databaseConnection))
+	saveUserRoute := framework.NewSaveUserController(uc)
 	router := gin.Default()
 	router.POST("/users", saveUserRoute.Save)
 
-	req := createRequest(t)
-	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
-
-	if w.Code != http.StatusOK {
-		t.Errorf("Expected status code %d, got %d", http.StatusOK, w.Code)
-	}
+	return router
 }
 
-func createRequest(t *testing.T) *http.Request {
-	p, err := json.Marshal(framework.UserPayload{Username: username, Password: "password"})
+func createRequest(t *testing.T, username string, password string) *http.Request {
+	p, err := json.Marshal(framework.UserPayload{Username: username, Password: password})
 	if err != nil {
 		t.Error("Error creating the payload", err)
 	}
@@ -67,17 +129,17 @@ func createRequest(t *testing.T) *http.Request {
 	return req
 }
 
-func checkIfUserGotInserted(t *testing.T, databaseConnection *sql.DB) {
-	var u string
-	err := databaseConnection.
-		QueryRow("SELECT username from users where username = $1", username).
-		Scan(&u)
+func (s *saveUserIntegrationTest) Execute() *saveUserIntegrationTest {
+	w := httptest.NewRecorder()
+	s.router.ServeHTTP(w, s.request)
 
-	if err != nil {
-		t.Fatal("Failed to query database: ", err)
-	}
+	s.response = w
+	return s
+}
 
-	if u != username {
-		t.Errorf("Expected username %s, got %s", username, u)
+func (s *saveUserIntegrationTest) CheckStatusCode(expected int) *saveUserIntegrationTest {
+	if s.response.Code != expected {
+		s.t.Errorf("Expected status code %d, got %d", expected, s.response.Code)
 	}
+	return s
 }

@@ -1,6 +1,7 @@
 package entities
 
 import (
+	"errors"
 	"testing"
 )
 
@@ -13,11 +14,7 @@ func (p fakePasswordEncrypt) Encrypt(password string) (string, error) {
 	return p.expectedPassword, p.expectedError
 }
 
-type GenericError struct{}
-
-func (e GenericError) Error() string {
-	return "Generic error"
-}
+const username = "username"
 
 func TestCreateUserWithEncryptedPassword(t *testing.T) {
 	input := make(map[string]string)
@@ -25,7 +22,7 @@ func TestCreateUserWithEncryptedPassword(t *testing.T) {
 	input["password2"] = "expected password 2"
 
 	for password, expectedPassword := range input {
-		user, err := newUser("username", password, fakePasswordEncrypt{expectedPassword, nil})
+		user, err := newUser(username, password, fakePasswordEncrypt{expectedPassword, nil})
 
 		if err != nil {
 			t.Error("Failed to encrypt password: ", err)
@@ -38,9 +35,9 @@ func TestCreateUserWithEncryptedPassword(t *testing.T) {
 }
 
 func TestEncryptUserPasswordWithError(t *testing.T) {
-	_, error := newUser("username", "password", fakePasswordEncrypt{"", GenericError{}})
+	_, err := newUser(username, "password", fakePasswordEncrypt{"", errors.New("")})
 
-	if error == nil {
-		t.Error("Should throw an error")
+	if err == nil {
+		t.Error("Should throw an error when encrypting the password")
 	}
 }

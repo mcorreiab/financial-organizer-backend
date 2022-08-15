@@ -21,3 +21,18 @@ func (ur UserRepository) SaveUser(user entities.User) (string, error) {
 
 	return user.Username, nil
 }
+
+func (ur UserRepository) FindUserByUsername(username string) (*entities.User, error) {
+	var u entities.User
+	err := ur.db.QueryRow("SELECT * from users where username = $1", username).Scan(&u.Username, &u.Password)
+
+	if err == nil {
+		return &u, nil
+	}
+
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+
+	return nil, err
+}

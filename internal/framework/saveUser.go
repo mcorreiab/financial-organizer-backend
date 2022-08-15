@@ -16,19 +16,30 @@ func NewSaveUserController(saveUserUsecase usecase.SaveUserUseCase) SaveUser {
 }
 
 type UserPayload struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Username string `json:"username" binding:"required"`
+	Password string `json:"password" binding:"required"`
 }
 
 func (s *SaveUser) Save(c *gin.Context) {
 	var payload UserPayload
-	c.BindJSON(&payload)
+	err := c.ShouldBindJSON(&payload)
 
-	_, err := s.saveUserUsecase.SaveUser(payload.Username, payload.Password)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, err.Error())
+		return
+	}
+
+	_, err = s.saveUserUsecase.SaveUser(payload.Username, payload.Password)
+
+	if _, ok := err.(usecase.UserExistsError); ok {
+		c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+		return
+	}
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	} else {
-		c.JSON(http.StatusOK, nil)
+		return
 	}
+
+	c.JSON(http.StatusOK, nil)
 }
