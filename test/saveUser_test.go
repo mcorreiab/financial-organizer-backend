@@ -68,7 +68,7 @@ func checkIfUserGotInserted(t *testing.T, databaseConnection *sql.DB) {
 		t.Fatal("Failed to query database: ", err)
 	}
 
-	if user != nil {
+	if user == nil {
 		t.Errorf("Could not find the user on database")
 	}
 }
@@ -85,10 +85,15 @@ func testReturnBadRequestWhenPasswordIsMissing(t *testing.T) {
 }
 
 func checkThatUserIsNotOnDatabase(t *testing.T, username string) {
-	var s string
-	err := databaseConnection.QueryRow("SELECT username from users where username = $1", username).Scan(&s)
-	if err != sql.ErrNoRows {
-		t.Fatal("Should return ErrNoRows. Returned", err)
+	repository := adapter.NewUserRepository(databaseConnection)
+	user, err := repository.FindUserByUsername(username)
+
+	if err != nil {
+		t.Fatal("Failed to query database: ", err)
+	}
+
+	if user != nil {
+		t.Errorf("User shouldn't be on database")
 	}
 }
 
