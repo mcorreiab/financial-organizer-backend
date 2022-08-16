@@ -4,7 +4,7 @@ integration-test:
 	docker-compose -f docker-compose-database.yml up -d --quiet-pull
 	@echo "Waiting for the database to be ready"
 	sleep 2
-	go test --tags=integration ./...
+	go test --tags=integration -coverprofile=cover.out ./...
 	docker-compose -f docker-compose-database.yml down --rmi local
 format:
 	gofmt -s -w .
