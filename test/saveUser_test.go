@@ -23,13 +23,6 @@ const password = "password"
 
 var databaseConnection *sql.DB
 
-type saveUserIntegrationTest struct {
-	router   *gin.Engine
-	request  *http.Request
-	t        *testing.T
-	response *httptest.ResponseRecorder
-}
-
 func TestSaveNewUser(t *testing.T) {
 	err := godotenv.Load("../.env")
 	if err != nil {
@@ -132,6 +125,13 @@ func createRequest(t *testing.T, username string, password string) *http.Request
 	}
 
 	return req
+}
+
+type saveUserIntegrationTest struct {
+	router   *gin.Engine
+	request  *http.Request
+	t        *testing.T
+	response *httptest.ResponseRecorder
 }
 
 func (s *saveUserIntegrationTest) Execute() *saveUserIntegrationTest {
