@@ -13,6 +13,7 @@ import (
 func TestSignIn(t *testing.T) {
 	tests := []testRunner{
 		{"SignInSuccess", testSignInSuccess},
+		{"SignInWithMissingCredentials", testSignInWithMissingCredentials},
 		{"TryToSignInUserDontExists", testTryToSignInUserDontExists},
 		{"TryToSignInUserWrongCredentials", testTryToSignInUserWrongCredentials},
 	}
@@ -26,6 +27,11 @@ func testSignInSuccess(t *testing.T) {
 	createUserOnDatabase(usecase, userPayload, t)
 
 	executeCallToApi(t, usecase, userPayload).checkStatusCode(201)
+}
+
+func testSignInWithMissingCredentials(t *testing.T) {
+	executeCallToApi(t, createUseCase(), framework.UserPayload{Username: "", Password: ""}).
+		checkStatusCode(400)
 }
 
 func testTryToSignInUserDontExists(t *testing.T) {
