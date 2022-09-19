@@ -57,7 +57,7 @@ func testTryToSignInUserWrongCredentials(t *testing.T) {
 }
 
 func createUseCase() usecase.UserUseCase {
-	return usecase.NewUserUseCase(adapter.NewUserRepository(databaseConnection))
+	return usecase.NewUserUseCase(adapter.NewUserRepository(databaseConnection), "mockKey")
 }
 
 func createUserOnDatabase(uc usecase.UserUseCase, userPayload framework.UserPayload, t *testing.T) {

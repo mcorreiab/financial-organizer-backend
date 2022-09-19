@@ -7,6 +7,7 @@ import (
 
 type UserUseCase struct {
 	userRepository UserRepository
+	SignInKey      string
 }
 
 type UserRepository interface {
@@ -30,8 +31,8 @@ func (e InvalidCredentialsError) Error() string {
 	return fmt.Sprintf("Invalid credential for user %s", e.Username)
 }
 
-func NewUserUseCase(userRepository UserRepository) UserUseCase {
-	return UserUseCase{userRepository}
+func NewUserUseCase(userRepository UserRepository, signInKey string) UserUseCase {
+	return UserUseCase{userRepository, signInKey}
 }
 
 func (uc UserUseCase) SaveUser(username string, password string) (string, error) {
@@ -82,5 +83,5 @@ func (uc UserUseCase) GenerateLoginToken(username string, password string) (stri
 		return "", InvalidCredentialsError{username}
 	}
 
-	return entities.NewToken()
+	return entities.Token{Key: uc.SignInKey}.NewToken()
 }

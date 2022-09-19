@@ -74,7 +74,7 @@ func testTryToInsertUserThatAlreadyExists(t *testing.T) {
 }
 
 func executeSaveUserIntegrationTest(t *testing.T, username string, password string) *apiTest {
-	return newApiTest(t, usecase.NewUserUseCase(adapter.NewUserRepository(databaseConnection))).
+	return newApiTest(t, usecase.NewUserUseCase(adapter.NewUserRepository(databaseConnection), "mockKey")).
 		setRequest(http.MethodPost, "/users", createBody(username, password)).
 		execute()
 }
