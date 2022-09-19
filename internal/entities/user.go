@@ -16,23 +16,29 @@ type passwordEncrypter interface {
 type bCryptPasswordEncrypt struct{}
 
 func (p bCryptPasswordEncrypt) Encrypt(password string) (string, error) {
-	pass, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
+	if pass, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost); err != nil {
 		return "", err
+	} else {
+		return string(pass), nil
 	}
-
-	return string(pass), nil
 }
 
-func NewUser(username string, password string) (User, error) {
+func NewUser(username, password string) (User, error) {
 	return newUser(username, password, bCryptPasswordEncrypt{})
 }
 
-func newUser(username string, password string, encrypter passwordEncrypter) (User, error) {
-	ep, err := encrypter.Encrypt(password)
-	if err != nil {
+func newUser(username, password string, encrypter passwordEncrypter) (User, error) {
+	if ep, err := encrypter.Encrypt(password); err != nil {
 		return User{}, err
+	} else {
+		return User{username, ep}, nil
+	}
+}
+
+func (u User) CompareHashAndPassword(password string) bool {
+	if err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password)); err == nil {
+		return true
 	}
 
-	return User{username, ep}, nil
+	return false
 }

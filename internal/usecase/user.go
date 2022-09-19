@@ -5,7 +5,7 @@ import (
 	"mcorreiab/financial-organizer-backend/internal/entities"
 )
 
-type SaveUserUseCase struct {
+type UserUseCase struct {
 	userRepository UserRepository
 }
 
@@ -22,11 +22,19 @@ func (u UserExistsError) Error() string {
 	return fmt.Sprintf("User with username %s already exists", u.Username)
 }
 
-func NewSaveUserUseCase(userRepository UserRepository) SaveUserUseCase {
-	return SaveUserUseCase{userRepository}
+type InvalidCredentialsError struct {
+	Username string
 }
 
-func (uc SaveUserUseCase) SaveUser(username string, password string) (string, error) {
+func (e InvalidCredentialsError) Error() string {
+	return fmt.Sprintf("Invalid credential for user %s", e.Username)
+}
+
+func NewUserUseCase(userRepository UserRepository) UserUseCase {
+	return UserUseCase{userRepository}
+}
+
+func (uc UserUseCase) SaveUser(username string, password string) (string, error) {
 	err := uc.checkIfUserExists(username)
 
 	if err != nil {
@@ -47,7 +55,7 @@ func (uc SaveUserUseCase) SaveUser(username string, password string) (string, er
 	return id, nil
 }
 
-func (uc SaveUserUseCase) checkIfUserExists(username string) error {
+func (uc UserUseCase) checkIfUserExists(username string) error {
 	user, err := uc.userRepository.FindUserByUsername(username)
 
 	if user != nil {
@@ -55,4 +63,24 @@ func (uc SaveUserUseCase) checkIfUserExists(username string) error {
 	}
 
 	return err
+}
+
+func (uc UserUseCase) GenerateLoginToken(username string, password string) (string, error) {
+	user, err := uc.userRepository.FindUserByUsername(username)
+
+	if err != nil {
+		return "", err
+	}
+
+	if user == nil {
+		return "", InvalidCredentialsError{username}
+	}
+
+	isAuthenticated := user.CompareHashAndPassword(password)
+
+	if !isAuthenticated {
+		return "", InvalidCredentialsError{username}
+	}
+
+	return entities.NewToken()
 }
