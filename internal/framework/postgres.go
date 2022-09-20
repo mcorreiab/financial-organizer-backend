@@ -3,6 +3,7 @@ package framework
 import (
 	"database/sql"
 	"fmt"
+	_ "github.com/joho/godotenv/autoload"
 	"os"
 )
 

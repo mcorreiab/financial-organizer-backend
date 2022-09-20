@@ -5,6 +5,7 @@ import (
 )
 
 type User struct {
+	Id       string
 	Username string
 	Password string
 }
@@ -31,7 +32,7 @@ func newUser(username, password string, encrypter passwordEncrypter) (User, erro
 	if ep, err := encrypter.Encrypt(password); err != nil {
 		return User{}, err
 	} else {
-		return User{username, ep}, nil
+		return User{"", username, ep}, nil
 	}
 }
 

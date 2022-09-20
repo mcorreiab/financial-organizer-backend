@@ -23,12 +23,10 @@ func (u UserExistsError) Error() string {
 	return fmt.Sprintf("User with username %s already exists", u.Username)
 }
 
-type InvalidCredentialsError struct {
-	Username string
-}
+type InvalidCredentialsError struct{}
 
 func (e InvalidCredentialsError) Error() string {
-	return fmt.Sprintf("Invalid credential for user %s", e.Username)
+	return "Invalid username or password"
 }
 
 func NewUserUseCase(userRepository UserRepository, signInKey string) UserUseCase {
@@ -74,14 +72,14 @@ func (uc UserUseCase) GenerateLoginToken(username string, password string) (stri
 	}
 
 	if user == nil {
-		return "", InvalidCredentialsError{username}
+		return "", InvalidCredentialsError{}
 	}
 
 	isAuthenticated := user.CompareHashAndPassword(password)
 
 	if !isAuthenticated {
-		return "", InvalidCredentialsError{username}
+		return "", InvalidCredentialsError{}
 	}
 
-	return entities.Token{Key: uc.SignInKey, UserId: user.Username}.NewToken()
+	return entities.Token{Key: uc.SignInKey, UserId: user.Id}.NewToken()
 }

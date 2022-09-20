@@ -24,7 +24,8 @@ func (ur UserRepository) SaveUser(user entities.User) (string, error) {
 
 func (ur UserRepository) FindUserByUsername(username string) (*entities.User, error) {
 	var u entities.User
-	err := ur.db.QueryRow("SELECT * from users where username = $1", username).Scan(&u.Username, &u.Password)
+	err := ur.db.QueryRow("SELECT * from users where username = $1", username).
+		Scan(&u.Id, &u.Username, &u.Password)
 
 	if err == nil {
 		return &u, nil
