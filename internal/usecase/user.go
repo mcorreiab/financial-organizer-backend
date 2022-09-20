@@ -83,5 +83,5 @@ func (uc UserUseCase) GenerateLoginToken(username string, password string) (stri
 		return "", InvalidCredentialsError{username}
 	}
 
-	return entities.Token{Key: uc.SignInKey}.NewToken()
+	return entities.Token{Key: uc.SignInKey, UserId: user.Username}.NewToken()
 }
