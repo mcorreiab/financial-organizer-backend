@@ -7,14 +7,19 @@ import (
 )
 
 type Token struct {
-	Key    string
-	UserId string
+	AccessToken string
+	ExpiresIn   int
 }
 
-func (t Token) NewToken() (string, error) {
+func NewToken(key string, userId string) (Token, error) {
 	claims := jwt.RegisteredClaims{
-		Subject:   t.UserId,
+		Subject:   userId,
 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
 	}
-	return jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(t.Key))
+	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(key))
+	if err != nil {
+		return Token{}, err
+	}
+
+	return Token{token, int((time.Duration(1) * time.Hour).Seconds())}, nil
 }

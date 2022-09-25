@@ -64,22 +64,22 @@ func (uc UserUseCase) checkIfUserExists(username string) error {
 	return err
 }
 
-func (uc UserUseCase) GenerateLoginToken(username string, password string) (string, error) {
+func (uc UserUseCase) GenerateLoginToken(username string, password string) (entities.Token, error) {
 	user, err := uc.userRepository.FindUserByUsername(username)
 
 	if err != nil {
-		return "", err
+		return entities.Token{}, err
 	}
 
 	if user == nil {
-		return "", InvalidCredentialsError{}
+		return entities.Token{}, InvalidCredentialsError{}
 	}
 
 	isAuthenticated := user.CompareHashAndPassword(password)
 
 	if !isAuthenticated {
-		return "", InvalidCredentialsError{}
+		return entities.Token{}, InvalidCredentialsError{}
 	}
 
-	return entities.Token{Key: uc.SignInKey, UserId: user.Id}.NewToken()
+	return entities.NewToken(uc.SignInKey, user.Id)
 }

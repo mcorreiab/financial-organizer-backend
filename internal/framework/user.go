@@ -71,5 +71,5 @@ func (s *User) GenerateToken(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"token": token})
+	c.JSON(http.StatusCreated, gin.H{"access_token": token.AccessToken, "expires_in": token.ExpiresIn})
 }
