@@ -8,13 +8,14 @@ import (
 
 func TestDecodeTokenWithSuccess(t *testing.T) {
 	mockUserId := "userId"
-	token, err := NewToken("key", mockUserId)
+	token := NewToken("key")
+	jwtToken, err := token.CreateJwt(mockUserId)
 
 	if err != nil {
 		panic(err)
 	}
 
-	userId, err := DecodeToken("key", token.AccessToken)
+	userId, err := token.DecodeJwtToken(jwtToken.AccessToken)
 
 	if err != nil {
 		panic(err)
@@ -26,13 +27,14 @@ func TestDecodeTokenWithSuccess(t *testing.T) {
 }
 
 func TestDecodeTokenWithoutUserId(t *testing.T) {
-	token, err := jwt.New(signingMethod).SignedString([]byte("key"))
+	tk := NewToken("key")
+	token, err := jwt.New(tk.signingMethod).SignedString([]byte("key"))
 
 	if err != nil {
 		panic(err)
 	}
 
-	_, err = DecodeToken("key", token)
+	_, err = tk.DecodeJwtToken(token)
 
 	if _, ok := err.(InvalidToken); !ok {
 		t.Errorf("Error should be an invalid token. Received %s", err)
@@ -42,7 +44,7 @@ func TestDecodeTokenWithoutUserId(t *testing.T) {
 func TestDecodeInvalidToken(t *testing.T) {
 	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
 
-	_, err := DecodeToken("key", token)
+	_, err := NewToken("key").DecodeJwtToken(token)
 
 	if _, ok := err.(InvalidToken); !ok {
 		t.Errorf("Error should be an invalid token. Received %s", err)

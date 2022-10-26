@@ -57,7 +57,7 @@ func (uc UserUseCase) checkIfUserExists(username string) error {
 	}
 }
 
-func (uc UserUseCase) GenerateLoginToken(username string, password string) (token entities.Token, err error) {
+func (uc UserUseCase) GenerateLoginToken(username string, password string) (token entities.JwtToken, err error) {
 	user, err := uc.userRepository.FindUserByUsername(username)
 
 	if err != nil {
@@ -74,5 +74,5 @@ func (uc UserUseCase) GenerateLoginToken(username string, password string) (toke
 		return
 	}
 
-	return entities.NewToken(uc.SignInKey, user.Id)
+	return entities.NewToken(uc.SignInKey).CreateJwt(user.Id)
 }
