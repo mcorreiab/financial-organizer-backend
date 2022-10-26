@@ -33,52 +33,45 @@ func NewUserUseCase(userRepository UserRepository, signInKey string) UserUseCase
 	return UserUseCase{userRepository, signInKey}
 }
 
-func (uc UserUseCase) SaveUser(username string, password string) (string, error) {
-	err := uc.checkIfUserExists(username)
+func (uc UserUseCase) SaveUser(username string, password string) (userId string, err error) {
+	err = uc.checkIfUserExists(username)
 
 	if err != nil {
-		return "", err
+		return
 	}
 
 	u, err := entities.NewUser(username, password)
 
 	if err != nil {
-		return "", err
+		return
 	}
 
-	id, err := uc.userRepository.SaveUser(u)
-	if err != nil {
-		return "", err
-	}
-
-	return id, nil
+	return uc.userRepository.SaveUser(u)
 }
 
 func (uc UserUseCase) checkIfUserExists(username string) error {
-	user, err := uc.userRepository.FindUserByUsername(username)
-
-	if user != nil {
-		return UserExistsError{username}
+	if user, err := uc.userRepository.FindUserByUsername(username); user != nil {
+		return UserExistsError{}
+	} else {
+		return err
 	}
-
-	return err
 }
 
-func (uc UserUseCase) GenerateLoginToken(username string, password string) (entities.Token, error) {
+func (uc UserUseCase) GenerateLoginToken(username string, password string) (token entities.Token, err error) {
 	user, err := uc.userRepository.FindUserByUsername(username)
 
 	if err != nil {
-		return entities.Token{}, err
+		return
 	}
 
 	if user == nil {
-		return entities.Token{}, InvalidCredentialsError{}
+		err = InvalidCredentialsError{}
+		return
 	}
 
-	isAuthenticated := user.CompareHashAndPassword(password)
-
-	if !isAuthenticated {
-		return entities.Token{}, InvalidCredentialsError{}
+	if isAuthenticated := user.CompareHashAndPassword(password); !isAuthenticated {
+		err = InvalidCredentialsError{}
+		return
 	}
 
 	return entities.NewToken(uc.SignInKey, user.Id)

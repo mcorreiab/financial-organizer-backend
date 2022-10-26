@@ -38,12 +38,12 @@ func (s *User) Save(c *gin.Context) {
 	_, err = s.userUsecase.SaveUser(payload.Username, payload.Password)
 
 	if _, ok := err.(usecase.UserExistsError); ok {
-		c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+		c.JSON(http.StatusConflict, NewError(UserExistsError, err.Error()))
 		return
 	}
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, NewError(UnexpectedError, err.Error()))
 		return
 	}
 
@@ -63,11 +63,11 @@ func (s *User) GenerateToken(c *gin.Context) {
 
 	if err != nil {
 		if _, ok := err.(usecase.InvalidCredentialsError); ok {
-			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+			c.JSON(http.StatusForbidden, NewError(AuthenticationError, err.Error()))
 			return
 		}
 
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, NewError(UnexpectedError, err.Error()))
 		return
 	}
 
