@@ -14,12 +14,15 @@ func NewUserRepository(db *sql.DB) UserRepository {
 }
 
 func (ur UserRepository) SaveUser(user entities.User) (string, error) {
-	_, err := ur.db.Exec("INSERT INTO users (username, password) VALUES ($1, $2)", user.Username, user.Password)
+	var insertedId string
+	err := ur.db.QueryRow(
+		"INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id",
+		user.Username, user.Password).Scan(&insertedId)
 	if err != nil {
 		return "", err
 	}
 
-	return user.Username, nil
+	return insertedId, nil
 }
 
 func (ur UserRepository) FindUserByUsername(username string) (*entities.User, error) {
