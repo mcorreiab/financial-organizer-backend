@@ -10,11 +10,6 @@ type UserUseCase struct {
 	SignInKey      string
 }
 
-type UserRepository interface {
-	SaveUser(user entities.User) (string, error)
-	FindUserByUsername(username string) (*entities.User, error)
-}
-
 type UserExistsError struct {
 	Username string
 }

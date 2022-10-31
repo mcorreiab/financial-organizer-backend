@@ -40,3 +40,7 @@ func (ur UserRepository) FindUserByUsername(username string) (*entities.User, er
 
 	return nil, err
 }
+
+func (ur UserRepository) FindById(id string) (*entities.User, error) {
+	return nil, nil
+}
