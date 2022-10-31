@@ -11,12 +11,6 @@ type JwtToken struct {
 	ExpiresIn   int
 }
 
-type InvalidToken struct{}
-
-func (t InvalidToken) Error() string {
-	return "Token is invalid"
-}
-
 type Token struct {
 	key           string
 	signingMethod jwt.SigningMethod
@@ -39,18 +33,18 @@ func (t Token) CreateJwt(userId string) (JwtToken, error) {
 	return JwtToken{token, int((time.Duration(1) * time.Hour).Seconds())}, nil
 }
 
-func (tk Token) DecodeJwtToken(token string) (string, error) {
+func (tk Token) DecodeJwtToken(token string) string {
 	parsedToken, _ := jwt.ParseWithClaims(token, &jwt.RegisteredClaims{}, func(t *jwt.Token) (interface{}, error) {
 		return []byte(tk.key), nil
 	})
 
 	if claims, ok := parsedToken.Claims.(*jwt.RegisteredClaims); ok && parsedToken.Valid {
 		if claims.Subject == "" {
-			return "", InvalidToken{}
+			return ""
 		}
 
-		return claims.Subject, nil
+		return claims.Subject
 	}
 
-	return "", InvalidToken{}
+	return ""
 }

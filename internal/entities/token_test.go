@@ -15,11 +15,7 @@ func TestDecodeTokenWithSuccess(t *testing.T) {
 		panic(err)
 	}
 
-	userId, err := token.DecodeJwtToken(jwtToken.AccessToken)
-
-	if err != nil {
-		panic(err)
-	}
+	userId := token.DecodeJwtToken(jwtToken.AccessToken)
 
 	if userId != mockUserId {
 		t.Errorf("Value %s is different from expected %s", userId, mockUserId)
@@ -34,19 +30,19 @@ func TestDecodeTokenWithoutUserId(t *testing.T) {
 		panic(err)
 	}
 
-	_, err = tk.DecodeJwtToken(token)
+	userId := tk.DecodeJwtToken(token)
 
-	if _, ok := err.(InvalidToken); !ok {
-		t.Errorf("Error should be an invalid token. Received %s", err)
+	if userId != "" {
+		t.Errorf("Should not return an userId. Received %s", userId)
 	}
 }
 
 func TestDecodeInvalidToken(t *testing.T) {
 	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
 
-	_, err := NewToken("key").DecodeJwtToken(token)
+	userId := NewToken("key").DecodeJwtToken(token)
 
-	if _, ok := err.(InvalidToken); !ok {
-		t.Errorf("Error should be an invalid token. Received %s", err)
+	if userId != "" {
+		t.Errorf("Should not return an userId. Received %s", userId)
 	}
 }

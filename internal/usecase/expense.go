@@ -5,6 +5,12 @@ import (
 	"mcorreiab/financial-organizer-backend/internal/entities"
 )
 
+type InvalidToken struct{}
+
+func (t InvalidToken) Error() string {
+	return "Token is invalid"
+}
+
 type ExpenseUseCase struct {
 	ExpenseRepository ExpenseRepository
 	UserRepository    UserRepository
@@ -16,9 +22,10 @@ func NewExpenseUseCase(expenseRepository ExpenseRepository, userRepository UserR
 }
 
 func (uc *ExpenseUseCase) SaveExpense(name string, value big.Float, token string) (expenseId string, err error) {
-	userId, err := entities.NewToken(uc.SignInKey).DecodeJwtToken(token)
+	userId := entities.NewToken(uc.SignInKey).DecodeJwtToken(token)
 
-	if err != nil {
+	if userId == "" {
+		err = InvalidToken{}
 		return
 	}
 
@@ -29,7 +36,7 @@ func (uc *ExpenseUseCase) SaveExpense(name string, value big.Float, token string
 	}
 
 	if user == nil {
-		err = entities.InvalidToken{}
+		err = InvalidToken{}
 		return
 	}
 
