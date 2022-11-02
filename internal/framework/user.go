@@ -11,14 +11,11 @@ type User struct {
 	userUsecase usecase.UserUseCase
 }
 
-func NewUserRouter(userUsecase usecase.UserUseCase) *gin.Engine {
-	router := gin.Default()
-
+func CreateUserRoutes(userUsecase usecase.UserUseCase, router *gin.Engine) {
 	userController := User{userUsecase}
 
 	router.POST("/users", userController.Save)
 	router.POST("/signin", userController.GenerateToken)
-	return router
 }
 
 type UserPayload struct {
@@ -31,7 +28,7 @@ func (s *User) Save(c *gin.Context) {
 	err := c.ShouldBindJSON(&payload)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, err.Error())
+		c.JSON(http.StatusBadRequest, NewError(InvalidPayload, err.Error()))
 		return
 	}
 

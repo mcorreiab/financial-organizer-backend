@@ -6,6 +6,7 @@ const (
 	AuthenticationError ErrorCode = "auth_error"
 	UnexpectedError     ErrorCode = "unexpected_error"
 	UserExistsError     ErrorCode = "user_exists"
+	InvalidPayload      ErrorCode = "invalid_payload"
 )
 
 type Error struct {

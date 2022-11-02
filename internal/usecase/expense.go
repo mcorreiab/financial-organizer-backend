@@ -12,9 +12,9 @@ func (t InvalidToken) Error() string {
 }
 
 type ExpenseUseCase struct {
-	ExpenseRepository ExpenseRepository
-	UserRepository    UserRepository
-	SignInKey         string
+	expenseRepository ExpenseRepository
+	userRepository    UserRepository
+	signInKey         string
 }
 
 func NewExpenseUseCase(expenseRepository ExpenseRepository, userRepository UserRepository, signKey string) *ExpenseUseCase {
@@ -22,14 +22,14 @@ func NewExpenseUseCase(expenseRepository ExpenseRepository, userRepository UserR
 }
 
 func (uc *ExpenseUseCase) SaveExpense(name string, value big.Float, token string) (expenseId string, err error) {
-	userId := entities.NewToken(uc.SignInKey).DecodeJwtToken(token)
+	userId := entities.NewToken(uc.signInKey).DecodeJwtToken(token)
 
 	if userId == "" {
 		err = InvalidToken{}
 		return
 	}
 
-	user, err := uc.UserRepository.FindById(userId)
+	user, err := uc.userRepository.FindById(userId)
 
 	if err != nil {
 		return
@@ -40,5 +40,5 @@ func (uc *ExpenseUseCase) SaveExpense(name string, value big.Float, token string
 		return
 	}
 
-	return uc.ExpenseRepository.SaveExpense(entities.Expense{Name: name, Value: value, User: *user})
+	return uc.expenseRepository.SaveExpense(entities.Expense{Name: name, Value: value, User: *user})
 }

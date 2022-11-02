@@ -7,7 +7,7 @@ import (
 
 type UserUseCase struct {
 	userRepository UserRepository
-	SignInKey      string
+	signInKey      string
 }
 
 type UserExistsError struct {
@@ -69,5 +69,5 @@ func (uc UserUseCase) GenerateLoginToken(username string, password string) (toke
 		return
 	}
 
-	return entities.NewToken(uc.SignInKey).CreateJwt(user.Id)
+	return entities.NewToken(uc.signInKey).CreateJwt(user.Id)
 }

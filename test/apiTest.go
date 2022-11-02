@@ -22,7 +22,9 @@ type apiTest struct {
 }
 
 func newApiTest(t *testing.T, usecase usecase.UserUseCase) *apiTest {
-	return &apiTest{framework.NewUserRouter(usecase), nil, t, nil}
+	router := gin.Default()
+	framework.CreateUserRoutes(usecase, router)
+	return &apiTest{router, nil, t, nil}
 }
 
 func (test *apiTest) setRequest(method string, path string, body any) *apiTest {
