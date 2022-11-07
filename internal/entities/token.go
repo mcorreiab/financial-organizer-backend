@@ -34,9 +34,13 @@ func (t Token) CreateJwt(userId string) (JwtToken, error) {
 }
 
 func (tk Token) DecodeJwtToken(token string) string {
-	parsedToken, _ := jwt.ParseWithClaims(token, &jwt.RegisteredClaims{}, func(t *jwt.Token) (interface{}, error) {
+	parsedToken, err := jwt.ParseWithClaims(token, &jwt.RegisteredClaims{}, func(t *jwt.Token) (interface{}, error) {
 		return []byte(tk.key), nil
 	})
+
+	if err != nil {
+		return ""
+	}
 
 	if claims, ok := parsedToken.Claims.(*jwt.RegisteredClaims); ok && parsedToken.Valid {
 		if claims.Subject == "" {

@@ -37,8 +37,18 @@ func TestDecodeTokenWithoutUserId(t *testing.T) {
 	}
 }
 
-func TestDecodeInvalidToken(t *testing.T) {
+func TestDecodeFakeToken(t *testing.T) {
 	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+
+	userId := NewToken("key").DecodeJwtToken(token)
+
+	if userId != "" {
+		t.Errorf("Should not return an userId. Received %s", userId)
+	}
+}
+
+func TestDecodeTokenInvalidFormat(t *testing.T) {
+	token := "123"
 
 	userId := NewToken("key").DecodeJwtToken(token)
 

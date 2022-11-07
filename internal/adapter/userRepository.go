@@ -38,5 +38,17 @@ func (ur UserRepository) FindUserByUsername(username string) (*entities.User, er
 }
 
 func (ur UserRepository) FindById(id string) (*entities.User, error) {
-	return nil, nil
+	var u entities.User
+	err := ur.db.QueryRow("SELECT * from users where id = $1", id).
+		Scan(&u.Id, &u.Username, &u.Password)
+
+	if err == nil {
+		return &u, nil
+	}
+
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+
+	return nil, err
 }

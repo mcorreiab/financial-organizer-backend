@@ -1,9 +1,12 @@
 package entities
 
-import "math/big"
-
 type Expense struct {
 	Name  string
-	Value big.Float
+	Value int64
 	User  User
+}
+
+func NewExpense(name string, value float64, user User) Expense {
+	valueInCents := value * 100
+	return Expense{name, int64(valueInCents), user}
 }

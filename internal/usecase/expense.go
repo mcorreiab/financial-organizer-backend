@@ -1,15 +1,8 @@
 package usecase
 
 import (
-	"math/big"
 	"mcorreiab/financial-organizer-backend/internal/entities"
 )
-
-type InvalidToken struct{}
-
-func (t InvalidToken) Error() string {
-	return "Token is invalid"
-}
 
 type ExpenseUseCase struct {
 	expenseRepository ExpenseRepository
@@ -21,14 +14,7 @@ func NewExpenseUseCase(expenseRepository ExpenseRepository, userRepository UserR
 	return &ExpenseUseCase{expenseRepository, userRepository, signKey}
 }
 
-func (uc *ExpenseUseCase) SaveExpense(name string, value big.Float, token string) (expenseId string, err error) {
-	userId := entities.NewToken(uc.signInKey).DecodeJwtToken(token)
-
-	if userId == "" {
-		err = InvalidToken{}
-		return
-	}
-
+func (uc *ExpenseUseCase) SaveExpense(name string, value float64, userId string) (expenseId string, err error) {
 	user, err := uc.userRepository.FindById(userId)
 
 	if err != nil {
@@ -40,5 +26,5 @@ func (uc *ExpenseUseCase) SaveExpense(name string, value big.Float, token string
 		return
 	}
 
-	return uc.expenseRepository.SaveExpense(entities.Expense{Name: name, Value: value, User: *user})
+	return uc.expenseRepository.SaveExpense(entities.NewExpense(name, value, *user))
 }
