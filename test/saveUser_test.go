@@ -6,29 +6,43 @@ import (
 	"database/sql"
 	"mcorreiab/financial-organizer-backend/internal/adapter"
 	"mcorreiab/financial-organizer-backend/internal/framework"
-	"mcorreiab/financial-organizer-backend/internal/usecase"
 	"net/http"
 	"testing"
 
 	_ "github.com/lib/pq"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 )
 
 const username = "username"
 const password = "password"
 
-func TestSaveNewUser(t *testing.T) {
-	tests := []testRunner{
-		{"SaveUser", testSaveUser},
-		{"UsernameMissing", testReturnBadRequestWhenUsernameIsMissing},
-		{"PasswordMissing", testReturnBadRequestWhenPasswordIsMissing},
-		{"InsertExistentUser", testTryToInsertUserThatAlreadyExists},
-	}
-	newSuite(t, tests).run()
+type SaveUserSuite struct {
+	suite.Suite
+	routerBuilder      *routerBuilder
+	databaseConnection *sql.DB
 }
 
-func testSaveUser(t *testing.T) {
-	executeSaveUserIntegrationTest(t, username, password).checkStatusCode(http.StatusCreated)
-	checkIfUserGotInserted(t, databaseConnection)
+func TestSaveUser(t *testing.T) {
+	suite.Run(t, new(SaveUserSuite))
+}
+
+func (suite *SaveUserSuite) SetupSuite() {
+	suite.databaseConnection = initLocalDatabase(suite.T())
+
+	suite.routerBuilder = newRouterBuilder(suite.databaseConnection, "mockKey").BuildUserRoutes().BuildExpensesRoutes()
+}
+
+func (suite *SaveUserSuite) TearDownTest() {
+	_, err := suite.databaseConnection.Exec("DELETE from users")
+	if err != nil {
+		suite.T().Fatal(err)
+	}
+}
+
+func (suite *SaveUserSuite) TestSaveUser() {
+	executeSaveUserIntegrationTest(suite, username, password).checkStatusCode(http.StatusCreated)
+	checkIfUserGotInserted(suite.T(), suite.databaseConnection)
 }
 
 func checkIfUserGotInserted(t *testing.T, databaseConnection *sql.DB) {
@@ -39,44 +53,39 @@ func checkIfUserGotInserted(t *testing.T, databaseConnection *sql.DB) {
 		t.Fatal("Failed to query database: ", err)
 	}
 
-	if user == nil {
-		t.Errorf("Could not find the user on database")
-	}
+	require.NotNil(t, user)
 }
 
-func testReturnBadRequestWhenUsernameIsMissing(t *testing.T) {
+func (suite *SaveUserSuite) TestReturnBadRequestWhenUsernameIsMissing() {
 	username := ""
-	executeSaveUserIntegrationTest(t, username, password).checkStatusCode(http.StatusBadRequest)
-	checkThatUserIsNotOnDatabase(t, username)
+	executeSaveUserIntegrationTest(suite, username, password).checkStatusCode(http.StatusBadRequest)
+	suite.checkThatUserIsNotOnDatabase(username)
 }
 
-func testReturnBadRequestWhenPasswordIsMissing(t *testing.T) {
-	executeSaveUserIntegrationTest(t, username, "").checkStatusCode(http.StatusBadRequest)
-	checkThatUserIsNotOnDatabase(t, username)
+func (suite *SaveUserSuite) TestReturnBadRequestWhenPasswordIsMissing() {
+	executeSaveUserIntegrationTest(suite, username, "").checkStatusCode(http.StatusBadRequest)
+	suite.checkThatUserIsNotOnDatabase(username)
 }
 
-func checkThatUserIsNotOnDatabase(t *testing.T, username string) {
-	repository := adapter.NewUserRepository(databaseConnection)
+func (suite *SaveUserSuite) checkThatUserIsNotOnDatabase(username string) {
+	repository := adapter.NewUserRepository(suite.databaseConnection)
 	user, err := repository.FindUserByUsername(username)
 
 	if err != nil {
-		t.Fatal("Failed to query database: ", err)
+		suite.T().Fatal("Failed to query database: ", err)
 	}
 
-	if user != nil {
-		t.Errorf("User shouldn't be on database")
-	}
+	require.Nil(suite.T(), user)
 }
 
-func testTryToInsertUserThatAlreadyExists(t *testing.T) {
-	executeSaveUserIntegrationTest(t, username, password).checkStatusCode(http.StatusCreated)
-	executeSaveUserIntegrationTest(t, username, password).checkStatusCode(http.StatusConflict)
+func (suite *SaveUserSuite) TestTryToInsertUserThatAlreadyExists() {
+	executeSaveUserIntegrationTest(suite, username, password).checkStatusCode(http.StatusCreated)
+	executeSaveUserIntegrationTest(suite, username, password).checkStatusCode(http.StatusConflict)
 }
 
-func executeSaveUserIntegrationTest(t *testing.T, username string, password string) *apiTest {
-	return newApiTest(t, usecase.NewUserUseCase(adapter.NewUserRepository(databaseConnection), "mockKey")).
-		setRequest(http.MethodPost, "/users", createBody(username, password)).
-		execute()
+func executeSaveUserIntegrationTest(suite *SaveUserSuite, username string, password string) *apiRequest {
+	userPayload := createBody(username, password)
+	return newApiRequest(suite.T(), suite.routerBuilder).setRequest(http.MethodPost, "/users", userPayload).execute()
 }
 
 func createBody(username string, password string) framework.UserPayload {

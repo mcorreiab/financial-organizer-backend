@@ -3,6 +3,8 @@ package entities
 import (
 	"errors"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 type fakePasswordEncrypt struct {
@@ -28,16 +30,12 @@ func TestCreateUserWithEncryptedPassword(t *testing.T) {
 			t.Error("Failed to encrypt password: ", err)
 		}
 
-		if user.Password != expectedPassword {
-			t.Errorf("Encrypted password %s is different from expected %s", user.Password, expectedPassword)
-		}
+		require.Equal(t, expectedPassword, user.Password)
 	}
 }
 
 func TestEncryptUserPasswordWithError(t *testing.T) {
 	_, err := newUser(username, "password", fakePasswordEncrypt{"", errors.New("")})
 
-	if err == nil {
-		t.Error("Should throw an error when encrypting the password")
-	}
+	require.NotNil(t, err)
 }

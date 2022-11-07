@@ -3,73 +3,77 @@
 package integration
 
 import (
-	"mcorreiab/financial-organizer-backend/internal/adapter"
+	"database/sql"
 	"mcorreiab/financial-organizer-backend/internal/framework"
-	"mcorreiab/financial-organizer-backend/internal/usecase"
 	"net/http"
 	"testing"
+
+	"github.com/stretchr/testify/suite"
 )
 
-func TestSignIn(t *testing.T) {
-	tests := []testRunner{
-		{"SignInSuccess", testSignInSuccess},
-		{"SignInWithMissingCredentials", testSignInWithMissingCredentials},
-		{"TryToSignInUserDontExists", testTryToSignInUserDontExists},
-		{"TryToSignInUserWrongCredentials", testTryToSignInUserWrongCredentials},
+type SignInSuite struct {
+	suite.Suite
+	routerBuilder      *routerBuilder
+	databaseConnection *sql.DB
+}
+
+var userOnDB = framework.UserPayload{Username: "username", Password: "password"}
+
+func TestSignin(t *testing.T) {
+	suite.Run(t, new(SignInSuite))
+}
+
+func (suite *SignInSuite) SetupSuite() {
+	suite.databaseConnection = initLocalDatabase(suite.T())
+	suite.cleanUpDatabase()
+
+	suite.routerBuilder = newRouterBuilder(suite.databaseConnection, "mockKey").BuildUserRoutes().BuildExpensesRoutes()
+	suite.createUser(userOnDB)
+}
+
+func (suite *SignInSuite) cleanUpDatabase() {
+	_, err := suite.databaseConnection.Exec("DELETE from users")
+	if err != nil {
+		suite.T().Fatal(err)
 	}
-	newSuite(t, tests).run()
 }
 
-func testSignInSuccess(t *testing.T) {
-	usecase := createUseCase()
-	userPayload := framework.UserPayload{Username: "username", Password: "password"}
-
-	createUserOnDatabase(usecase, userPayload, t)
-
-	executeCallToApi(t, usecase, userPayload).checkStatusCode(201)
+func (suite *SignInSuite) createUser(userPayload framework.UserPayload) {
+	newApiRequest(suite.T(), suite.routerBuilder).
+		setRequest(http.MethodPost, "/users", userPayload).
+		execute().checkStatusCode(201)
 }
 
-func testSignInWithMissingCredentials(t *testing.T) {
-	executeCallToApi(t, createUseCase(), framework.UserPayload{Username: "", Password: ""}).
+func (suite *SignInSuite) TearDownTest() {
+	_, err := suite.databaseConnection.Exec("DELETE from users where username != $1", userOnDB.Username)
+	if err != nil {
+		suite.T().Fatal(err)
+	}
+}
+
+func (suite *SignInSuite) TestSignInSuccess() {
+	suite.executeCallToApi(userOnDB).checkStatusCode(201)
+}
+
+func (suite *SignInSuite) TestSignInWithMissingCredentials() {
+	suite.executeCallToApi(framework.UserPayload{Username: "", Password: ""}).
 		checkStatusCode(400)
 }
 
-func testTryToSignInUserDontExists(t *testing.T) {
-	usecase := createUseCase()
-	userOnDatabase := framework.UserPayload{Username: "username", Password: "password"}
-
-	createUserOnDatabase(usecase, userOnDatabase, t)
-
+func (suite *SignInSuite) TestTryToSignInUserDontExists() {
 	userOnSignin := framework.UserPayload{Username: "username2", Password: "password"}
 
-	executeCallToApi(t, usecase, userOnSignin).checkStatusCode(403)
+	suite.executeCallToApi(userOnSignin).checkStatusCode(403)
 }
 
-func testTryToSignInUserWrongCredentials(t *testing.T) {
-	usecase := createUseCase()
-	userOnDatabase := framework.UserPayload{Username: "username", Password: "password"}
+func (suite *SignInSuite) testTryToSignInUserWrongCredentials() {
+	userOnSignin := framework.UserPayload{Username: userOnDB.Username, Password: "password2"}
 
-	createUserOnDatabase(usecase, userOnDatabase, t)
-
-	userOnSignin := framework.UserPayload{Username: userOnDatabase.Username, Password: "password2"}
-
-	executeCallToApi(t, usecase, userOnSignin).checkStatusCode(403)
+	suite.executeCallToApi(userOnSignin).checkStatusCode(403)
 }
 
-func createUseCase() usecase.UserUseCase {
-	return usecase.NewUserUseCase(adapter.NewUserRepository(databaseConnection), "mockKey")
-}
-
-func createUserOnDatabase(uc usecase.UserUseCase, userPayload framework.UserPayload, t *testing.T) {
-	_, err := uc.SaveUser(userPayload.Username, userPayload.Password)
-
-	if err != nil {
-		t.Fatal("Error creating user on database", err)
-	}
-}
-
-func executeCallToApi(t *testing.T, usecase usecase.UserUseCase, payload framework.UserPayload) *apiTest {
-	return newApiTest(t, usecase).
+func (suite *SignInSuite) executeCallToApi(payload framework.UserPayload) *apiRequest {
+	return newApiRequest(suite.T(), suite.routerBuilder).
 		setRequest(http.MethodPost, "/signin", payload).
 		execute()
 }

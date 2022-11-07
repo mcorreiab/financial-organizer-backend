@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDecodeTokenWithSuccess(t *testing.T) {
@@ -17,9 +18,7 @@ func TestDecodeTokenWithSuccess(t *testing.T) {
 
 	userId := token.DecodeJwtToken(jwtToken.AccessToken)
 
-	if userId != mockUserId {
-		t.Errorf("Value %s is different from expected %s", userId, mockUserId)
-	}
+	require.Equal(t, mockUserId, userId)
 }
 
 func TestDecodeTokenWithoutUserId(t *testing.T) {
@@ -32,9 +31,7 @@ func TestDecodeTokenWithoutUserId(t *testing.T) {
 
 	userId := tk.DecodeJwtToken(token)
 
-	if userId != "" {
-		t.Errorf("Should not return an userId. Received %s", userId)
-	}
+	require.Empty(t, userId)
 }
 
 func TestDecodeFakeToken(t *testing.T) {
@@ -42,9 +39,7 @@ func TestDecodeFakeToken(t *testing.T) {
 
 	userId := NewToken("key").DecodeJwtToken(token)
 
-	if userId != "" {
-		t.Errorf("Should not return an userId. Received %s", userId)
-	}
+	require.Empty(t, userId)
 }
 
 func TestDecodeTokenInvalidFormat(t *testing.T) {
@@ -52,7 +47,5 @@ func TestDecodeTokenInvalidFormat(t *testing.T) {
 
 	userId := NewToken("key").DecodeJwtToken(token)
 
-	if userId != "" {
-		t.Errorf("Should not return an userId. Received %s", userId)
-	}
+	require.Empty(t, userId)
 }

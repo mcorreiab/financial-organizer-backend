@@ -2,8 +2,6 @@ package integration
 
 import (
 	"encoding/json"
-	"mcorreiab/financial-organizer-backend/internal/framework"
-	"mcorreiab/financial-organizer-backend/internal/usecase"
 	"testing"
 
 	"net/http"
@@ -14,20 +12,18 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type apiTest struct {
+type apiRequest struct {
 	router   *gin.Engine
 	request  *http.Request
 	t        *testing.T
 	response *httptest.ResponseRecorder
 }
 
-func newApiTest(t *testing.T, usecase usecase.UserUseCase) *apiTest {
-	router := gin.Default()
-	framework.CreateUserRoutes(usecase, router)
-	return &apiTest{router, nil, t, nil}
+func newApiRequest(t *testing.T, routerBuilder *routerBuilder) *apiRequest {
+	return &apiRequest{routerBuilder.Build(), nil, t, nil}
 }
 
-func (test *apiTest) setRequest(method string, path string, body any) *apiTest {
+func (test *apiRequest) setRequest(method string, path string, body any) *apiRequest {
 	p, err := json.Marshal(body)
 
 	if err != nil {
@@ -43,7 +39,7 @@ func (test *apiTest) setRequest(method string, path string, body any) *apiTest {
 	return test
 }
 
-func (test *apiTest) execute() *apiTest {
+func (test *apiRequest) execute() *apiRequest {
 	if test.request == nil {
 		panic("No request was defined")
 	}
@@ -55,7 +51,7 @@ func (test *apiTest) execute() *apiTest {
 	return test
 }
 
-func (test *apiTest) checkStatusCode(expected int) *apiTest {
+func (test *apiRequest) checkStatusCode(expected int) *apiRequest {
 	if test.response.Code != expected {
 		test.t.Errorf("Expected status code %d, got %d", expected, test.response.Code)
 	}

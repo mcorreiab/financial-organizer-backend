@@ -18,13 +18,13 @@ func main() {
 	userRepository := adapter.NewUserRepository(databaseConnection)
 
 	authMiddleware := framework.NewAuthMiddleware(usecase.NewAuthUsecase(jwtKey, userRepository))
-	expensesGroup := router.Group("/expenses", authMiddleware.Authorization())
 
 	framework.CreateUserRoutes(usecase.NewUserUseCase(userRepository, jwtKey), router)
 	framework.CreateExpenseRoutes(
 		usecase.NewExpenseUseCase(adapter.NewExpenseRepository(databaseConnection),
 			userRepository,
 			jwtKey),
-		expensesGroup)
+		router,
+		authMiddleware)
 	router.Run()
 }

@@ -11,9 +11,10 @@ type ExpenseController struct {
 	expenseUc *usecase.ExpenseUseCase
 }
 
-func CreateExpenseRoutes(usecase *usecase.ExpenseUseCase, router *gin.RouterGroup) {
+func CreateExpenseRoutes(usecase *usecase.ExpenseUseCase, router *gin.Engine, authMiddleware AuthMiddleware) {
+	expensesGroup := router.Group("/expenses", authMiddleware.Authorization())
 	c := ExpenseController{usecase}
-	router.POST("/", c.Save)
+	expensesGroup.POST("/", c.Save)
 }
 
 type ExpensePayload struct {
