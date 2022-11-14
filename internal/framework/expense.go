@@ -14,11 +14,11 @@ type ExpenseController struct {
 func CreateExpenseRoutes(usecase *usecase.ExpenseUseCase, router *gin.Engine, authMiddleware AuthMiddleware) {
 	expensesGroup := router.Group("/expenses", authMiddleware.Authorization())
 	c := ExpenseController{usecase}
-	expensesGroup.POST("/", c.Save)
+	expensesGroup.POST("", c.Save)
 }
 
 type ExpensePayload struct {
-	Name  string  `json:"name"`
+	Name  string  `json:"name" binding:"notEmpty"`
 	Value float64 `json:"value"`
 }
 

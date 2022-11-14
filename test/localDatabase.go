@@ -14,5 +14,12 @@ func initLocalDatabase(t *testing.T) *sql.DB {
 		t.Fatal(err)
 	}
 
-	return framework.GetDatabaseConnection()
+	databaseConnection := framework.GetDatabaseConnection()
+	_, err = databaseConnection.Exec("DELETE from users")
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return databaseConnection
 }

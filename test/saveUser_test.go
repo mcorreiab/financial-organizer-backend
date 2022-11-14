@@ -18,19 +18,13 @@ const username = "username"
 const password = "password"
 
 type SaveUserSuite struct {
-	suite.Suite
-	routerBuilder      *routerBuilder
-	databaseConnection *sql.DB
+	ConcreteTestSuite
 }
 
 func TestSaveUser(t *testing.T) {
-	suite.Run(t, new(SaveUserSuite))
-}
-
-func (suite *SaveUserSuite) SetupSuite() {
-	suite.databaseConnection = initLocalDatabase(suite.T())
-
-	suite.routerBuilder = newRouterBuilder(suite.databaseConnection, "mockKey").BuildUserRoutes().BuildExpensesRoutes()
+	testSuite := &SaveUserSuite{}
+	testSuite.Init()
+	suite.Run(t, testSuite)
 }
 
 func (suite *SaveUserSuite) TearDownTest() {
@@ -85,7 +79,8 @@ func (suite *SaveUserSuite) TestTryToInsertUserThatAlreadyExists() {
 
 func executeSaveUserIntegrationTest(suite *SaveUserSuite, username string, password string) *apiRequest {
 	userPayload := createBody(username, password)
-	return newApiRequest(suite.T(), suite.routerBuilder).setRequest(http.MethodPost, "/users", userPayload).execute()
+	ctx := apiRequestContext{suite: suite, path: "/users", body: userPayload}
+	return createApiRequest(ctx).execute()
 }
 
 func createBody(username string, password string) framework.UserPayload {

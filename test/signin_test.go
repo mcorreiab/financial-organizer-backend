@@ -3,45 +3,31 @@
 package integration
 
 import (
-	"database/sql"
 	"mcorreiab/financial-organizer-backend/internal/framework"
-	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
 )
 
 type SignInSuite struct {
-	suite.Suite
-	routerBuilder      *routerBuilder
-	databaseConnection *sql.DB
+	ConcreteTestSuite
 }
 
 var userOnDB = framework.UserPayload{Username: "username", Password: "password"}
 
 func TestSignin(t *testing.T) {
-	suite.Run(t, new(SignInSuite))
+	testSuite := &SignInSuite{}
+	testSuite.Init()
+	suite.Run(t, testSuite)
 }
 
 func (suite *SignInSuite) SetupSuite() {
-	suite.databaseConnection = initLocalDatabase(suite.T())
-	suite.cleanUpDatabase()
-
-	suite.routerBuilder = newRouterBuilder(suite.databaseConnection, "mockKey").BuildUserRoutes().BuildExpensesRoutes()
 	suite.createUser(userOnDB)
 }
 
-func (suite *SignInSuite) cleanUpDatabase() {
-	_, err := suite.databaseConnection.Exec("DELETE from users")
-	if err != nil {
-		suite.T().Fatal(err)
-	}
-}
-
 func (suite *SignInSuite) createUser(userPayload framework.UserPayload) {
-	newApiRequest(suite.T(), suite.routerBuilder).
-		setRequest(http.MethodPost, "/users", userPayload).
-		execute().checkStatusCode(201)
+	ctx := apiRequestContext{suite: suite, path: "/users", body: userPayload}
+	createApiRequest(ctx).execute().checkStatusCode(201)
 }
 
 func (suite *SignInSuite) TearDownTest() {
@@ -73,7 +59,6 @@ func (suite *SignInSuite) testTryToSignInUserWrongCredentials() {
 }
 
 func (suite *SignInSuite) executeCallToApi(payload framework.UserPayload) *apiRequest {
-	return newApiRequest(suite.T(), suite.routerBuilder).
-		setRequest(http.MethodPost, "/signin", payload).
-		execute()
+	ctx := apiRequestContext{suite: suite, path: "/signin", body: payload}
+	return createApiRequest(ctx).execute()
 }

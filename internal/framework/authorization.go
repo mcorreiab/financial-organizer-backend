@@ -29,7 +29,7 @@ func (m AuthMiddleware) Authorization() gin.HandlerFunc {
 			return
 		}
 
-		token := strings.TrimPrefix(auth, "Bearer ")
+		token := strings.TrimSpace(strings.TrimPrefix(auth, "Bearer "))
 
 		if token == "" {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, NewError(InvalidPayload, "Authorization header is malformed"))

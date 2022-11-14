@@ -19,24 +19,25 @@ type apiRequest struct {
 	response *httptest.ResponseRecorder
 }
 
-func newApiRequest(t *testing.T, routerBuilder *routerBuilder) *apiRequest {
-	return &apiRequest{routerBuilder.Build(), nil, t, nil}
+type apiRequestContext struct {
+	suite TestSuite
+	path  string
+	body  any
 }
 
-func (test *apiRequest) setRequest(method string, path string, body any) *apiRequest {
-	p, err := json.Marshal(body)
+func createApiRequest(context apiRequestContext) *apiRequest {
+	p, err := json.Marshal(context.body)
 
 	if err != nil {
-		test.t.Fatal("Failed to marshal payload: ", err)
+		context.suite.T().Fatal("Failed to marshal payload: ", err)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, path, bytes.NewBuffer(p))
+	req, err := http.NewRequest(http.MethodPost, context.path, bytes.NewBuffer(p))
 	if err != nil {
-		test.t.Fatal("Failed to create request: ", err)
+		context.suite.T().Fatal("Failed to create request: ", err)
 	}
 
-	test.request = req
-	return test
+	return &apiRequest{context.suite.GetRouter(), req, context.suite.T(), nil}
 }
 
 func (test *apiRequest) execute() *apiRequest {
