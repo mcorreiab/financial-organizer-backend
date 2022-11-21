@@ -39,7 +39,7 @@ func (m AuthMiddleware) Authorization() gin.HandlerFunc {
 		userId, err := m.authUsecase.ValidateToken(token)
 		if err != nil {
 			if _, ok := err.(usecase.InvalidToken); ok {
-				c.AbortWithStatusJSON(http.StatusNotFound, nil)
+				c.AbortWithStatusJSON(http.StatusUnauthorized, nil)
 				return
 			}
 

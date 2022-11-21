@@ -19,7 +19,7 @@ func CreateExpenseRoutes(usecase *usecase.ExpenseUseCase, router *gin.Engine, au
 
 type ExpensePayload struct {
 	Name  string  `json:"name" binding:"notEmpty"`
-	Value float64 `json:"value"`
+	Value float64 `json:"value" binding:"gt=0"`
 }
 
 func (ec ExpenseController) Save(c *gin.Context) {

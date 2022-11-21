@@ -50,19 +50,29 @@ func (suite *SaveExpenseTest) TearDownTest() {
 }
 
 func (suite *SaveExpenseTest) TestSaveExpenseWithSuccess() {
-	ctx := apiRequestContext{suite: suite, path: "/expenses", body: expensePayload}
-	apiRequest := createApiRequest(ctx)
-	apiRequest.request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", suite.jwtToken))
+	apiRequest := suite.creteRequestSaveExpense(expensePayload)
 
 	apiRequest.execute().checkStatusCode(201)
 }
 
 func (suite *SaveExpenseTest) TestTryToSaveExpenseEmptyName() {
 	payload := framework.ExpensePayload{Name: "", Value: 5.50}
+	apiRequest := suite.creteRequestSaveExpense(payload)
+
+	apiRequest.execute().checkStatusCode(400)
+}
+
+func (suite *SaveExpenseTest) TestTryToSaveExpenseInvalidValue() {
+	payload := framework.ExpensePayload{Name: "expense", Value: 0}
+	apiRequest := suite.creteRequestSaveExpense(payload)
+
+	apiRequest.execute().checkStatusCode(400)
+}
+
+func (suite *SaveExpenseTest) creteRequestSaveExpense(payload framework.ExpensePayload) *apiRequest {
 	ctx := apiRequestContext{suite: suite, path: "/expenses", body: payload}
 	apiRequest := createApiRequest(ctx)
 
 	apiRequest.request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", suite.jwtToken))
-
-	apiRequest.execute().checkStatusCode(400)
+	return apiRequest
 }

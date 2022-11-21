@@ -38,7 +38,7 @@ func (suite *AuthorizationTest) TestRequestWithInvalidToken() {
 	apiRequest := suite.createRequestToSaveExpense()
 	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
 	apiRequest.request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
-	apiRequest.execute().checkStatusCode(404)
+	apiRequest.execute().checkStatusCode(401)
 }
 
 func (suite *AuthorizationTest) createRequestToSaveExpense() *apiRequest {

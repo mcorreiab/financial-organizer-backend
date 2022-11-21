@@ -25,16 +25,5 @@ func (uc *AuthUsecase) ValidateToken(token string) (userId string, err error) {
 		return
 	}
 
-	user, err := uc.userRepository.FindById(userId)
-
-	if err != nil {
-		return
-	}
-
-	if user == nil {
-		err = InvalidToken{}
-		return
-	}
-
 	return userId, nil
 }
