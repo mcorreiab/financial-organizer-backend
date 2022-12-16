@@ -60,7 +60,7 @@ func (s *User) GenerateToken(c *gin.Context) {
 
 	if err != nil {
 		if _, ok := err.(usecase.InvalidCredentialsError); ok {
-			c.JSON(http.StatusForbidden, NewError(AuthenticationError, err.Error()))
+			c.JSON(http.StatusUnauthorized, NewError(AuthenticationError, err.Error()))
 			return
 		}
 

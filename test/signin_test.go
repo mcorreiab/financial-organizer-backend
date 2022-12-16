@@ -49,13 +49,13 @@ func (suite *SignInSuite) TestSignInWithMissingCredentials() {
 func (suite *SignInSuite) TestTryToSignInUserDontExists() {
 	userOnSignin := framework.UserPayload{Username: "username2", Password: "password"}
 
-	suite.executeCallToApi(userOnSignin).checkStatusCode(403)
+	suite.executeCallToApi(userOnSignin).checkStatusCode(401)
 }
 
 func (suite *SignInSuite) testTryToSignInUserWrongCredentials() {
 	userOnSignin := framework.UserPayload{Username: userOnDB.Username, Password: "password2"}
 
-	suite.executeCallToApi(userOnSignin).checkStatusCode(403)
+	suite.executeCallToApi(userOnSignin).checkStatusCode(401)
 }
 
 func (suite *SignInSuite) executeCallToApi(payload framework.UserPayload) *apiRequest {
